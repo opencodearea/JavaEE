@@ -1,0 +1,153 @@
+
+############################################ DEFAULT WEB XML ####################################################
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> web.xml <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" id="WebApp_ID" version="3.1">
+  <display-name>Struts2_lab01</display-name>
+  
+  <welcome-file-list>
+		<welcome-file>register.jsp</welcome-file>
+	</welcome-file-list>
+	<filter>
+		<filter-name>struts2</filter-name>
+		<filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>struts2</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+  
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>index.htm</welcome-file>
+    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>default.html</welcome-file>
+    <welcome-file>default.htm</welcome-file>
+    <welcome-file>default.jsp</welcome-file>
+  </welcome-file-list>
+</web-app>
+
+
+############################################ WEBCONTENT ####################################################
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ingreso.jsp <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib uri="/struts-tags" prefix="s" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Ingreso</title>
+</head>
+<body>
+
+<s:form action="Validar">
+	<s:textfield name="userlogin" label="Ingrese Usuario" />
+	<s:password name="userpwd" label="Ingrese Password" />
+	<s:submit label="Ingresar" />
+</s:form>
+
+</body>
+</html>
+
+
+############################################ JAVA RESOURCES/SRC/edu.cibertec.action ####################################################
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Usuario.java <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+
+package edu.cibertec.action;
+
+import com.opensymphony.xwork2.ActionSupport;
+
+public class Usuario extends ActionSupport {
+	
+	private static final long serialVersionUID = 1L;
+	
+	private String userlogin;
+	private String userpwd;
+	private String usernombre;
+	
+	//metodo de llamada a ingreso submit
+	public String execute(){
+		String ir =ERROR;
+		if(getUserlogin().equals("CIBERTEC")&&getUserpwd().equals("123")) {
+			setUsernombre("PEDRO DIAZ ROMAN");
+			ir=SUCCESS;
+		}
+		return ir;
+	}
+	
+	public String getUserlogin() {
+		return userlogin;
+	}
+	public void setUserlogin(String userlogin) {
+		this.userlogin = userlogin;
+	}
+	public String getUserpwd() {
+		return userpwd;
+	}
+	public void setUserpwd(String userpwd) {
+		this.userpwd = userpwd;
+	}
+	public String getUsernombre() {
+		return usernombre;
+	}
+	public void setUsernombre(String usernombre) {
+		this.usernombre = usernombre;
+	}
+
+}
+
+############################################ STRUTS.XML - JAVA RESOURCES/SRC ####################################################
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> struts.xml <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.5//EN"
+    "http://struts.apache.org/dtds/struts-2.5.dtd">
+<struts>
+    <constant name="struts.devMode" value="true" />
+
+    <package name="Struts2_lab01" extends="struts-default">
+        <action name="Validar" class="edu.cibertec.action.Usuario">
+            <result name="success">/bienvenida.jsp</result>
+            <result name="error">/error.jsp</result>
+        </action>
+    </package>
+</struts>
+
+############################################ WEBCONTENT ####################################################
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> bienenida.jsp <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@taglib uri="/struts-tags" prefix="s" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Bienvenida</title>
+</head>
+<body>
+	
+	<s:property value="usernombre" />
+
+</body>
+</html>
+
+############################################ WEBCONTENT ####################################################
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> error.jsp <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+
+</body>
+</html>
