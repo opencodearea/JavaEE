@@ -1,0 +1,683 @@
+We need to create a table in our database to store the user information.
+******************************Create Table in Database******************************
+
+struts2crud.sql
+CREATE TABLE `struts2crud` (
+  `uname` VARCHAR(25) DEFAULT NULL,
+  `uemail` VARCHAR(50) NOT NULL,
+  `upass` VARCHAR(25) DEFAULT NULL,
+  `udeg` VARCHAR(25) DEFAULT NULL,
+  PRIMARY KEY (`uemail`)
+);
+###################################################################################
+Define Filter
+Before staring the code we need define struts 2 filter in web.xml
+******************************web.xml.******************************
+
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	id="WebApp_ID" version="2.5">
+	<display-name>Struts2CRUD</display-name>
+	<welcome-file-list>
+		<welcome-file>register.jsp</welcome-file>
+	</welcome-file-list>
+	<filter>
+		<filter-name>struts2</filter-name>
+		<filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>struts2</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+</web-app>
+
+###################################################################################
+Create DAO Class
+This class will communicate with the database. In this class I have created all the methods for connecting to database, insert data in database, fetch data from database, etc.
+******************************Admin.java******************************
+package org.websparrow.dao;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class Admin {
+	
+	// method for create connection
+	public static Connection getConnection() throws Exception {
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+			return DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/websparrow", "root", "");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	// method for save user data in database
+	public int registerUser(String uname, String uemail, String upass, String udeg) throws Exception {
+		int i = 0;
+		try {
+			String sql = "INSERT INTO STRUTS2CRUD VALUES (?,?,?,?)";
+			PreparedStatement ps = getConnection().prepareStatement(sql);
+			ps.setString(1, uname);
+			ps.setString(2, uemail);
+			ps.setString(3, upass);
+			ps.setString(4, udeg);
+			i = ps.executeUpdate();
+			return i;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return i;
+		} finally {
+			if (getConnection() != null) {
+				getConnection().close();
+			}
+		}
+	}
+
+	// method for fetch saved user data
+	public ResultSet report() throws SQLException, Exception {
+		ResultSet rs = null;
+		try {
+			String sql = "SELECT UNAME,UEMAIL,UPASS,UDEG FROM STRUTS2CRUD";
+			PreparedStatement ps = getConnection().prepareStatement(sql);
+			rs = ps.executeQuery();
+			return rs;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			if (getConnection() != null) {
+				getConnection().close();
+			}
+		}
+	}
+
+	// method for fetch old data to be update
+	public ResultSet fetchUserDetails(String uemail) throws SQLException, Exception {
+		ResultSet rs = null;
+		try {
+			String sql = "SELECT UNAME,UEMAIL,UPASS,UDEG FROM STRUTS2CRUD WHERE UEMAIL=?";
+			PreparedStatement ps = getConnection().prepareStatement(sql);
+			ps.setString(1, uemail);
+			rs = ps.executeQuery();
+			return rs;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			if (getConnection() != null) {
+				getConnection().close();
+			}
+		}
+	}
+
+	// method for update new data in database
+	public int updateUserDetails(String uname, String uemail, String upass, String udeg, String uemailhidden)
+			throws SQLException, Exception {
+		getConnection().setAutoCommit(false);
+		int i = 0;
+		try {
+			String sql = "UPDATE STRUTS2CRUD SET UNAME=?,UEMAIL=?,UPASS=?,UDEG=? WHERE UEMAIL=?";
+			PreparedStatement ps = getConnection().prepareStatement(sql);
+			ps.setString(1, uname);
+			ps.setString(2, uemail);
+			ps.setString(3, upass);
+			ps.setString(4, udeg);
+			ps.setString(5, uemailhidden);
+			i = ps.executeUpdate();
+			return i;
+		} catch (Exception e) {
+			e.printStackTrace();
+			getConnection().rollback();
+			return 0;
+		} finally {
+			if (getConnection() != null) {
+				getConnection().close();
+			}
+		}
+	}
+
+	// method for delete the record
+	public int deleteUserDetails(String uemail) throws SQLException, Exception {
+		getConnection().setAutoCommit(false);
+		int i = 0;
+		try {
+			String sql = "DELETE FROM STRUTS2CRUD WHERE UEMAIL=?";
+			PreparedStatement ps = getConnection().prepareStatement(sql);
+			ps.setString(1, uemail);
+			i = ps.executeUpdate();
+			return i;
+		} catch (Exception e) {
+			e.printStackTrace();
+			getConnection().rollback();
+			return 0;
+		} finally {
+			if (getConnection() != null) {
+				getConnection().close();
+			}
+		}
+	}
+}
+
+###################################################################################
+Create Bean Class
+Create the getter and setters of parameters.
+****************************** EmpBean.java ******************************
+
+package org.websparrow.bean;
+
+public class EmpBean {
+	
+	// generate getter and setters
+	private String uname, uemail, upass, udeg;
+	int srNo;
+}
+
+###################################################################################
+Create Action Classes
+We need to create the four action classes for every operation to make it simple.
+1- Register Action Class
+In this class, we get the user information and save into the database. If data inserted successfully display success message other error message.
+****************************** RegisterAction.java ******************************
+
+package org.websparrow.action;
+
+import org.websparrow.dao.Admin;
+
+import com.opensymphony.xwork2.ActionSupport;
+
+public class RegisterAction extends ActionSupport {
+
+	private static final long serialVersionUID = 2139116285823340125L;
+	private String uname, uemail, upass, udeg;
+	private String msg = "";
+	Admin admin = null;
+	int ctr = 0;
+
+	@Override
+	public String execute() throws Exception {
+		admin = new Admin();
+
+		try {
+			ctr = admin.registerUser(uname, uemail, upass, udeg);
+			if (ctr > 0) {
+				msg = "Registration Successfull";
+			} else {
+				msg = "Some error";
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "REGISTER";
+	}
+
+	public String getUname() {
+		return uname;
+	}
+
+	public void setUname(String uname) {
+		this.uname = uname;
+	}
+
+	public String getUemail() {
+		return uemail;
+	}
+
+	public void setUemail(String uemail) {
+		this.uemail = uemail;
+	}
+
+	public String getUpass() {
+		return upass;
+	}
+
+	public void setUpass(String upass) {
+		this.upass = upass;
+	}
+
+	public String getUdeg() {
+		return udeg;
+	}
+
+	public void setUdeg(String udeg) {
+		this.udeg = udeg;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public int getCtr() {
+		return ctr;
+	}
+
+	public void setCtr(int ctr) {
+		this.ctr = ctr;
+	}
+}
+
+###################################################################################
+2- Report Action Class
+This class will fetch all the stored data from database and display on JSP. If data is available in database display it else display No Data Available.
+****************************** ReportAction.java ******************************
+
+package org.websparrow.action;
+
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.websparrow.bean.EmpBean;
+import org.websparrow.dao.Admin;
+
+import com.opensymphony.xwork2.ActionSupport;
+
+public class ReportAction extends ActionSupport {
+
+	private static final long serialVersionUID = 6329394260276112660L;
+	ResultSet rs = null;
+	EmpBean bean = null;
+	List<EmpBean> beanList = null;
+	Admin admin = new Admin();
+	private boolean noData = false;
+
+	@Override
+	public String execute() throws Exception {
+		try {
+			beanList = new ArrayList<EmpBean>();
+			rs = admin.report();
+			int i = 0;
+			if (rs != null) {
+				while (rs.next()) {
+					i++;
+					bean = new EmpBean();
+					bean.setSrNo(i);
+					bean.setUname(rs.getString("UNAME"));
+					bean.setUemail(rs.getString("UEMAIL"));
+					bean.setUpass(rs.getString("UPASS").replaceAll("(?s).", "*"));
+					bean.setUdeg(rs.getString("UDEG"));
+					beanList.add(bean);
+				}
+			}
+			if (i == 0) {
+				noData = false;
+			} else {
+				noData = true;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "REPORT";
+	}
+
+	public boolean isNoData() {
+		return noData;
+	}
+
+	public void setNoData(boolean noData) {
+		this.noData = noData;
+	}
+
+	public List<EmpBean> getBeanList() {
+		return beanList;
+	}
+
+	public void setBeanList(List<EmpBean> beanList) {
+		this.beanList = beanList;
+	}
+}
+
+###################################################################################
+3- Update Action Class
+In this class We will fetch the previous data from database and update the new data in database.
+****************************** UpdateAction.java ******************************
+
+package org.websparrow.action;
+
+import java.sql.ResultSet;
+
+import org.websparrow.dao.Admin;
+
+import com.opensymphony.xwork2.ActionSupport;
+
+public class UpdateAction extends ActionSupport {
+
+	private static final long serialVersionUID = -1905974197186620917L;
+	private String uname = "", uemail = "", upass = "", udeg = "", uemailhidden = "";
+	private String msg = "";
+	ResultSet rs = null;
+	Admin dao = new Admin();
+	String submitType;
+
+	@Override
+	public String execute() throws Exception {
+		try {
+			if (submitType.equals("updatedata")) {
+				rs = dao.fetchUserDetails(uemail.trim());
+				if (rs != null) {
+					while (rs.next()) {
+						uname = rs.getString("UNAME");
+						uemail = rs.getString("UEMAIL");
+						upass = rs.getString("UPASS");
+						udeg = rs.getString("UDEG");
+					}
+				}
+			} else {
+				int i = dao.updateUserDetails(uname, uemail, upass, udeg, uemailhidden);
+				if (i > 0) {
+					msg = "Record Updated Successfuly";
+				} else {
+					msg = "error";
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return "UPDATE";
+	}
+
+	public String getUname() {
+		return uname;
+	}
+
+	public void setUname(String uname) {
+		this.uname = uname;
+	}
+
+	public String getUpass() {
+		return upass;
+	}
+
+	public void setUpass(String upass) {
+		this.upass = upass;
+	}
+
+	public String getUdeg() {
+		return udeg;
+	}
+
+	public void setUdeg(String udeg) {
+		this.udeg = udeg;
+	}
+
+	public String getUemail() {
+		return uemail;
+	}
+
+	public void setUemail(String uemail) {
+		this.uemail = uemail;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public String getUemailhidden() {
+		return uemailhidden;
+	}
+
+	public void setUemailhidden(String uemailhidden) {
+		this.uemailhidden = uemailhidden;
+	}
+
+	public String getSubmitType() {
+		return submitType;
+	}
+
+	public void setSubmitType(String submitType) {
+		this.submitType = submitType;
+	}
+}
+
+###################################################################################
+4- Delete Action Class
+Delete the select data from database.
+****************************** DeleteAction.java ******************************
+
+package org.websparrow.action;
+
+import org.websparrow.dao.Admin;
+
+import com.opensymphony.xwork2.ActionSupport;
+
+public class DeleteAction extends ActionSupport {
+
+	private static final long serialVersionUID = -146601914103585418L;
+	String uemail, msg;
+	Admin dao = new Admin();
+
+	@Override
+	public String execute() throws Exception {
+		try {
+			int isDeleted = dao.deleteUserDetails(uemail);
+			if (isDeleted > 0) {
+				msg = "Record deleted successfully";
+			} else {
+				msg = "Some error";
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "DELETE";
+	}
+
+	public String getUemail() {
+		return uemail;
+	}
+
+	public void setUemail(String uemail) {
+		this.uemail = uemail;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+}
+
+###################################################################################
+Create JSP Pages
+Create the JSP pages that interact with the users. For more convenience we have created the separate pages for every operation.
+1- Register JSP
+On this page user will fill all the information.
+****************************** register.jsp ******************************
+
+<%@taglib prefix="s" uri="/struts-tags"%>
+<html>
+<head>
+<title>Register</title>
+<style type="text/css">
+.button-register {background-color: green;color: white;}
+.button-report {background-color: #000000;color: white;margin-left: 30%;}
+</style>
+</head>
+<body>
+	<h2>Struts 2 Create, Read, Update and Delete (CRUD) Example using JDBC</h2>
+	<a href="report"><button class="button-report" type="button">Report</button></a>
+	<s:form action="registeruser.action" method="post">
+		<s:textfield label="Full Name" name="uname" />
+		<s:textfield label="Email" name="uemail" />
+		<s:password label="Password" name="upass" />
+		<s:textfield label="Designation" name="udeg" />
+		<s:submit cssClass="button-register" value="Resgister" />
+	</s:form>
+	<s:if test="ctr>0">
+		<span style="color: green;"><s:property value="msg" /></span>
+	</s:if>
+	<s:else>
+		<span style="color: red;"><s:property value="msg" /></span>
+	</s:else>
+</body>
+</html>
+
+###################################################################################
+2- Report JSP
+This page display all the data that retrieved from database. .
+****************************** report.jsp ******************************
+
+<%@taglib prefix="s" uri="/struts-tags"%>
+<html>
+<head>
+<title>Report</title>
+<style>
+table, td, th {border: 1px solid black;}
+table {border-collapse: collapse;width: 60%;}
+th {height: 30px;}
+.button-update {background-color: #008CBA;color: white;}
+.button-delete {background-color: red;color: white;}
+</style>
+</head>
+<body>
+	<h2>Struts 2 Create, Read, Update and Delete (CRUD) Example using JDBC</h2>
+	<div style="margin-top: 40px;">
+		<s:if test="noData==true">
+			<table>
+				<thead>
+					<tr style="background-color: #E0E0E1;">
+						<th>Sr.No.</th>
+						<th>Name</th>
+						<th>Email</th>
+						<th>Password</th>
+						<th>Designation</th>
+						<th>Action</th>
+					</tr>
+				</thead>
+				<s:iterator value="beanList">
+					<tr>
+						<td><s:property value="srNo" /></td>
+						<td><s:property value="uname" /></td>
+						<td><s:property value="uemail" /></td>
+						<td><s:property value="upass" /></td>
+						<td><s:property value="udeg" /></td>
+						<td>
+							<a href="updatedetails.action?submitType=updatedata&uemail=<s:property value="uemail"/>">
+								<button class="button-update">Update</button>
+							</a>
+							<a href="deleterecord.action?uemail=<s:property value="uemail"/>">
+								<button class="button-delete">Delete</button>
+							</a>
+						</td>
+					</tr>
+				</s:iterator>
+			</table>
+		</s:if>
+		<s:else>
+			<div style="color: red;">No Data Found.</div>
+		</s:else>
+	</div>
+</body>
+</html>
+
+###################################################################################
+3- Update JSP
+On this page we will fetch the previous data of selected row and update the new data into database.
+****************************** update.jsp ******************************
+
+<%@taglib prefix="s" uri="/struts-tags"%>
+<html>
+<head>
+<title>Update</title>
+</head>
+<body>
+	<h2>Struts 2 Create, Read, Update and Delete (CRUD) Example using JDBC</h2>
+	<form action=updatedetails method="post">
+		<pre>
+<b>Name:         </b><input type="text" name="uname" value='<s:property value="uname"/>'>
+		
+		
+<b>Email:        </b><input type="email"  name="uemail" value='<s:property value="uemail"/>'>
+		            <input type="hidden" name="uemailhidden" value='<s:property value="uemail"/>'>
+		
+<b>Password:     </b><input type="password" name="upass" value='<s:property value="upass"/>'>
+		
+		
+<b>Designation:  </b><input type="text" name="udeg" value='<s:property value="udeg"/>'>
+		
+		<button name="submitType" value="update" type="submit">Update</button>
+		</pre>
+	</form>
+	<s:if test="ctr>0">
+		<span style="color: red;"><s:property value="msg" /></span>
+	</s:if>
+	<s:else>
+		<span style="color: red;"><s:property value="msg" /></span>
+	</s:else>
+</body>
+</html>
+
+###################################################################################
+4- Delete JSP
+Show the status if selected record is deleted or not.
+****************************** delete.jsp ******************************
+
+<%@taglib prefix="s" uri="/struts-tags"%>
+<html>
+<head>
+<title>Delete</title>
+</head>
+<body>
+	<h2>Struts 2 Create, Read, Update and Delete (CRUD) Example using JDBC</h2>
+	<span><s:property value="msg" /></span><br><br>
+	<a href="report">
+		<button type="button">Report</button>
+	</a>
+</body>
+</html>
+
+###################################################################################
+Map Action Classes and JSP Pages
+Finally map the all action class results to the corresponding JSP pages in struts.xml
+****************************** struts.xml ******************************
+
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+"-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+"http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="default" extends="struts-default">
+		<action name="registeruser" class="org.websparrow.action.RegisterAction">
+			<result name="REGISTER">/register.jsp</result>
+		</action>
+		<action name="report" class="org.websparrow.action.ReportAction">
+			<result name="REPORT">/report.jsp</result>
+		</action>
+		<action name="updatedetails" class="org.websparrow.action.UpdateAction">
+			<result name="UPDATE">/update.jsp</result>
+		</action>
+		<action name="deleterecord" class="org.websparrow.action.DeleteAction">
+			<result name="DELETE">/delete.jsp</result>
+		</action>
+	</package>
+</struts>
+
+###################################################################################
+Output:
+Now everything is all set, deploy the project in your web server.
+
+http://www.websparrow.org/struts/struts2-create-read-update-and-delete-crud-example-using-jdbc
+
+###################################################################################
+
+
+
+###################################################################################
+******************************  ******************************
+
