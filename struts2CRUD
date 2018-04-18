@@ -1,3 +1,10 @@
+
+https://struts.apache.org/download.cgi#struts2516
+http://www-us.apache.org/dist/struts/2.5.16/struts-2.5.16-all.zip
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+mysql-connector-java-5.1.46.zip
+https://dev.mysql.com/downloads/file/?id=476198
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 We need to create a table in our database to store the user information.
 ******************************Create Table in Database******************************
 
