@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="persistence.mybatis.mapper.ClienteMapper">
+
+<resultMap type="cliente" id="rmCliente">
+<id column="id_cliente" property="id" jdbcType="INTEGER"/>
+<result column="apellidos" property="apellidos" jdbcType="VARCHAR"/>
+<result column="nombres" property="nombres" jdbcType="VARCHAR"/>
+<result column="fecnac" property="fechaNac" jdbcType="DATE"/>
+<result column="edad" property="edad" jdbcType="INTEGER"/>
+<result column="direccion" property="direccion" jdbcType="VARCHAR"/>
+<result column="fecafiliacion" property="fechaAfiliacion" jdbcType="DATE"/>
+</resultMap>
+<select id="getClientes" resultMap="rmCliente">
+Select id_cliente,
+apellidos,
+nombres,
+fecnac,
+edad,
+direccion,
+fecafiliacion
+from tb_clientes
+</select>
+<select id="getClientebyId" parameterType="int" resultMap="rmCliente">
+Select id_cliente,
+apellidos,
+nombres,
+fecnac,
+edad,
+direccion,
+fecafiliacion
+from tb_clientes
+where id_cliente = #{id}
+</select>
+<delete id="deleteCliente" parameterType="int">
+DELETE FROM tb_clientes
+WHERE id_cliente = #{id}
+</delete>
+<insert id="insertCliente" parameterType="cliente">
+INSERT INTO tb_clientes(apellidos,nombres,fecnac,edad,direccion,fecafiliacion)
+VALUES(#{apellidos},#{nombres},#{fechaNac},#{edad},#{direccion},#{fechaAfiliacion});
+</insert>
+<update id="updateCliente" parameterType="cliente">
+UPDATE tb_clientes
+SET apellidos = #{apellidos},
+nombres = #{nombres},
+fecnac = #{fechaNac},
+edad = #{edad},
+direccion = #{direccion},
+fecafiliacion = #{fechaAfiliacion}
+WHERE id_cliente = #{id}
+</update>
+</mapper>
