@@ -1,0 +1,9 @@
+<resultMap type="cliente" id="rmCliente">
+		<id column="id_cliente" property="id" jdbcType="INTEGER"/>
+		<result column="apellidos" property="apellidos" jdbcType="VARCHAR"/>
+		<result column="nombres" property="nombres" jdbcType="VARCHAR"/>
+		<result column="fecnac" property="fechanacimiento" jdbcType="DATE"/>
+		<result column="edad" property="edad" jdbcType="INTEGER"/>
+		<result column="direccion" property="direccion" jdbcType="VARCHAR"/>
+		<result column="fecafiliacion" property="fechaafiliacion" jdbcType="DATE"/>
+	</resultMap>
